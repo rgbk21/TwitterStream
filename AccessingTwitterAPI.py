@@ -2,6 +2,9 @@ import tweepy
 import os
 import numpy as np
 import pandas as pd
+import zipfile
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 from tweepy.streaming import StreamListener
 from tweepy import Stream
@@ -87,11 +90,15 @@ class TwitterListener(StreamListener):
     def on_data(self, data):
         try:
             print(data)
-            with open(self.fetched_tweets_filename, 'a') as tf:
+            with open(fetched_tweets_filename, 'a') as tf:
                 tf.write(data)
                 statinfo = os.stat(fetched_tweets_filename)
-                if statinfo.st_size > 3145728:
+                if statinfo.st_size > 51457280:
                     print("File Size Exceeded")
+                    zip_file = zipfile.ZipFile(str(fetched_tweets_filename) + ".zip", 'w')
+                    zip_file.write(fetched_tweets_filename, compress_type=zipfile.ZIP_DEFLATED)
+                    zip_file.close()
+                    os.remove(fetched_tweets_filename)
                     print("Creating a new file and direct the stream towards it")
                     return False
             return True
@@ -152,7 +159,9 @@ if __name__ == '__main__':
         count = count + 1
         fetched_tweets_filename = "tweets_HK_" + str(count) + "_.txt"
         twitter_streamer.stream_tweets(fetched_tweets_filename, hash_tag_list)
-
+        gauth = GoogleAuth()
+        gauth.LocalWebserverAuth()
+        drive = GoogleDrive(gauth)
 
     #Uncomment the below lines for getting tweets of a specific user:
     # twitter_client = TwitterClient("CppCon")
