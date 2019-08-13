@@ -1,4 +1,5 @@
 import tweepy
+import os
 import numpy as np
 import pandas as pd
 
@@ -65,7 +66,7 @@ class TwitterStreamer():
         self.twitter_authenticator = TwitterAuthenticator()
 
 
-    #hash_tag_list is the woirds that you will be using to filter the tweets
+    #hash_tag_list is the words that you will be using to filter the tweets
     def stream_tweets(self, fetched_tweets_filename, hash_tag_list):
         # This handles Twitter authentication and the connection to Twitter Streaming API
         listener = TwitterListener(fetched_tweets_filename)
@@ -88,6 +89,11 @@ class TwitterListener(StreamListener):
             print(data)
             with open(self.fetched_tweets_filename, 'a') as tf:
                 tf.write(data)
+                statinfo = os.stat(fetched_tweets_filename)
+                if statinfo.st_size > 3145728:
+                    print("File Size Exceeded")
+                    print("Creating a new file and direct the stream towards it")
+                    return False
             return True
         except BaseException as e:
             print("Error on_data %s" % str(e))
@@ -129,23 +135,30 @@ class TweetAnalyzer():
         df["retweet_count"] = np.array([tweet.retweet_count for tweet in tweets])
         df["favorite_count"] = np.array([tweet.favorite_count for tweet in tweets])
         df["retweeted"] = np.array([tweet.retweeted for tweet in tweets])
-
         return df
 
 
 if __name__ == '__main__':
     # Authenticate using config.py and connect to Twitter Streaming API.
-    hash_tag_list = ["Pizza"]
-    fetched_tweets_filename = "tweets.txt"
+    # hash_tag_list=['#JeffreyEpsteinDead', '#EpsteinSuicide', '#EpsteinMurder', '#ClintonBodyCount']
+    hash_tag_list = ['#HongKongAirport', '#HongKong', 'Hong Kong']
+    count = 0
+    fetched_tweets_filename = "tweets_HK_" + str(count) + "_.txt"
     #Uncomment the below 2 lines for Streaming Tweets to the file
-    # twitter_streamer = TwitterStreamer()#Creates an object of the class TwitterStreamer
-    # twitter_streamer.stream_tweets(fetched_tweets_filename, hash_tag_list)
+    twitter_streamer = TwitterStreamer()#Creates an object of the class TwitterStreamer
+    twitter_streamer.stream_tweets(fetched_tweets_filename, hash_tag_list)
+
+    while True:
+        count = count + 1
+        fetched_tweets_filename = "tweets_HK_" + str(count) + "_.txt"
+        twitter_streamer.stream_tweets(fetched_tweets_filename, hash_tag_list)
+
 
     #Uncomment the below lines for getting tweets of a specific user:
     # twitter_client = TwitterClient("CppCon")
-    twitter_client = TwitterClient()#creating an object from TwitterClient class
-    api = twitter_client.get_twitter_client_api()
-    tweet_analyzer = TweetAnalyzer()#Creating an object from TweetAnalyzer class
+    # twitter_client = TwitterClient()#creating an object from TwitterClient class
+    # api = twitter_client.get_twitter_client_api()
+    # tweet_analyzer = TweetAnalyzer()#Creating an object from TweetAnalyzer class
     #api.user_timeline is a function that is provided by the twitter API. It is not a function that we have written.
     #Check: http://docs.tweepy.org/en/v3.8.0/api.html for more examples of such functions
 
@@ -153,15 +166,21 @@ if __name__ == '__main__':
     # It will build a dataframe with the columns specified in the tweets_to_dataframe method
     # it will calculate the sientiment of the tweet and add it to the created datatframe
     # And then finally print the dataframe to the console
-    tweets = api.user_timeline(screen_name="realDonaldTrump", count=20)
-    df = tweet_analyzer.tweets_to_dataframe(tweets)
+    # tweets = api.user_timeline(screen_name="DurarGaurav", count=20)
+
+    # print("Starting Printing individual tweet objects from User")
+    # for tweet in tweets:
+    #     print(tweet._json, sep="")
+    # print("Completed Printing individual tweet objects from User")
+
+    # df = tweet_analyzer.tweets_to_dataframe(tweets)
     #Adding the sentiment to the dataframe
-    df["sentiment"] = np.array([tweet_analyzer.analyze_sentiment(tweet) for tweet in df["tweets"]])
+    # df["sentiment"] = np.array([tweet_analyzer.analyze_sentiment(tweet) for tweet in df["tweets"]])
 
     # print(dir(tweets[0]))#prints outs the attributes that we can use for each tweet
     # print(df.head(10))#print out the first 10 elements in the dataframe
-    with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
-        print(df)
+    # with pd.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+    #     print(df)
 
     #print(tweets)
     # print(twitter_client.get_friend_list(10))
