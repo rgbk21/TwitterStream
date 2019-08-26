@@ -12,13 +12,14 @@ from tweepy import API
 from tweepy import Cursor
 from textblob import TextBlob
 import re #reges library
+from credentials import consumer_key
+from credentials import consumer_secret
+from credentials import access_token
+from credentials import access_token_secret
+
 from pprint import pprint
 import json
 
-consumer_key = "wO8w6KENORTrUY3Kvcx8D7kwc"
-consumer_secret = "YxsOqgHE0L6LFLTI3tvMmSzL4GkEpuUGxg5LMKbCSxduezGQqf"
-access_token = "1129164193683386368-Clfi2rS7noy2jcrweFiPZadX3FeHmZ"
-access_token_secret = "3DHtoRcQHQv4uWPpbDcXAbGswJCfWFGrVfo0kRT1aVtbi"
 
 # # # # TWITTER CLIENT # # # #
 class TwitterClient():
@@ -93,7 +94,7 @@ class TwitterListener(StreamListener):
             with open(fetched_tweets_filename, 'a') as tf:
                 tf.write(data)
                 statinfo = os.stat(fetched_tweets_filename)
-                if statinfo.st_size > 51457280:
+                if statinfo.st_size > 1e+9:
                     print("File Size Exceeded")
                     zip_file = zipfile.ZipFile(str(fetched_tweets_filename) + ".zip", 'w')
                     zip_file.write(fetched_tweets_filename, compress_type=zipfile.ZIP_DEFLATED)
@@ -159,9 +160,9 @@ if __name__ == '__main__':
         count = count + 1
         fetched_tweets_filename = "tweets_HK_" + str(count) + "_.txt"
         twitter_streamer.stream_tweets(fetched_tweets_filename, hash_tag_list)
-        gauth = GoogleAuth()
-        gauth.LocalWebserverAuth()
-        drive = GoogleDrive(gauth)
+        # gauth = GoogleAuth()
+        # gauth.LocalWebserverAuth()
+        # drive = GoogleDrive(gauth)
 
     #Uncomment the below lines for getting tweets of a specific user:
     # twitter_client = TwitterClient("CppCon")
